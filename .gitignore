@@ -1,5 +1,6 @@
 /data/
 /experiments/
+!/experiments/*DRIVE*
 /results/
 **/.idea/
 **/.ipynb_checkpoints/
