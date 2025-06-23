@@ -2,9 +2,8 @@
 import subprocess
 model_name = 'UNettp'
 datasets = ['DRIVE', 'STARE', 'CHASEDB1', 'HRF']
-# datasets = ['CHASEDB1']
 cycle_lens = '20/10'
-def run_pipeline(model_name, cycle_lens, dataset, receiver_email):
+def run_pipeline(model_name, cycle_lens, dataset):
     commands = [
         [
             'python', 'train_cyclical.py',
@@ -32,7 +31,5 @@ def run_pipeline(model_name, cycle_lens, dataset, receiver_email):
     for command in commands:
         subprocess.run(command)
 
-
-
 for dataset in datasets:
-    run_pipeline(model_name, cycle_lens, dataset, 'receiver_email')
+    run_pipeline(model_name, cycle_lens, dataset)

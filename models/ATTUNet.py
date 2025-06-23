@@ -185,9 +185,7 @@ class AttU_Net(nn.Module):
         d2 = self.Up_conv2(d2)
 
         d1 = self.Conv_1x1(d2)
-        # d1 = F.softmax(d1,dim=1)
         return d1
-from torchsummary import summary
 if __name__ == '__main__':
     input = torch.randn((1, 3, 512, 512))
     model = AttU_Net(in_channels=3, num_classes=2)

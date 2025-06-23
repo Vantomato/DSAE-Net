@@ -135,9 +135,6 @@ if __name__ == '__main__':
     test_dataset = get_test_dataset(data_path, csv_path=csv_path, tg_size=tg_size)
     print('* Instantiating model  = ' + str(model_name))
     model = get_arch(model_name, in_c=in_c).to(device)
-    if (model_name == 'wnet' or model_name == 'big_wnet' or model_name == 'DConvUNeXt' or
-            model_name == 'D_L_ConvUNeXt' or ('_ConvUNeXt' in model_name) or model_name == 'WNET' or '_WNet' in model_name):
-        model.mode='eval'
     model.mode = 'eval'
 
     print('* Loading trained weights from ' + experiment_path)
@@ -153,7 +150,7 @@ if __name__ == '__main__':
     for i in tqdm(range(len(test_dataset))):
         im_tens, mask, coords_crop, original_sz, im_name = test_dataset[i]
         start_time = time.perf_counter()
-        full_pred,_ = create_pred(model, im_tens, mask, coords_crop, original_sz, tta=tta)
+        full_pred = create_pred(model, im_tens, mask, coords_crop, original_sz, tta=tta)
         times.append(time.perf_counter() - start_time)
         save_pred(full_pred, save_results_path, im_name)
 

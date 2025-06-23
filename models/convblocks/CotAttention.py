@@ -1,8 +1,3 @@
-# 论文名称：Contextual Transformer Networks for Visual Recognition
-# 论文地址：https://arxiv.org/pdf/2107.12292.pdf
-# 代码地址：https://github.com/JDAI-CV/CoTNet
-# 博客地址：https://yolov5.blog.csdn.net/article/details/130644184
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -169,19 +164,11 @@ class C2f_CoTAttention(nn.Module):
         y.extend(m(y[-1]) for m in self.m)
         return self.cv2(torch.cat(y, 1))
 
-    # def forward_split(self, x):
-    #     """Applies spatial attention to module's input."""
-    #     y = list(self.cv1(x).split((self.c, self.c), 1))
-    #     y.extend(m(y[-1]) for m in self.m)
-    #     return self.cv2(torch.cat(y, 1))
-
 if __name__ == '__main__':
     block = C2f_CoTAttention(32, 32, n=1, shortcut=True, g=1, e=0.5)
     input = torch.rand(1, 32, 512, 512).to("cuda")
     block = block.to("cuda")
     flops, params = profile(block, inputs=(input,))
-    #C3_CoTAttention parameters: 7264
-    #C2f_CoTAttention parameters: 9824
     print('FLOPs = ' + str(flops / 1000 ** 3) + 'G')
     print('Params = ' + str(params / 1000 ** 2) + 'M')
     print(block)

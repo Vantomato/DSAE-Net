@@ -112,14 +112,6 @@ class SE_Block(nn.Module):
 class LMAFF(nn.Module):
     def __init__(self, in_channels, out_channels, d_rate1, d_rate2):
         super(LMAFF, self).__init__()
-        # self.t_conv = Conv_Block(in_channels, in_channels)
-
-        #self.sep_conv = nn.Sequential(
-        #    nn.Conv2d(in_channels, in_channels, kernel_size=(3, 3), padding=1, groups=in_channels, bias=False),
-        #    nn.Conv2d(in_channels, out_channels, kernel_size=(1, 1), padding=0, bias=False),
-        #    nn.BatchNorm2d(out_channels),
-        #    nn.ReLU(inplace=True)
-        #)
         self.conv_path1 = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size=(3, 3), dilation=d_rate1, padding=d_rate1, bias=False),
             nn.BatchNorm2d(out_channels),
@@ -163,24 +155,15 @@ class FEB(nn.Module):
             nn.BatchNorm2d(channels),
             nn.ReLU(inplace=True),
         )
-        
-        # self.bn = nn.BatchNorm2d(channels)
+
         self.active = nn.ReLU(inplace=True)
 
     def forward(self, x):
-        # out = self.conv(self.in_conv(x))
-        #x = self.conv(self.ch_conv(x))
-        #x1 = self.active(0.6 * x + self.conv(x) * 0.4)
-        #x2 = self.active(0.4 * x + 0.3 * x1 + self.conv(x1) * 0.4)
-        #x3 = self.active(0.2 * x + 0.2 * x1 + 0.2 * x2 + self.conv(x2) * 0.4)
-        #x4 = self.active(0.1 * x + 0.1 * x1 + 0.1 * x2 + 0.2 * x3 + self.conv(x3) * 0.4)
-        ##########################################################################
         x = self.conv(self.active(self.ch_conv(x)))
         x1 = self.active(x + self.conv(x))
         x2 = self.active(x + x1 + self.conv(x1))
         x3 = self.active(x + x1 + x2 + self.conv(x2))
         x4 = self.active(x + x1 + x2 + x3 + self.conv(x3))
-        x5 = self.active(x + x1 + x2 + x3 + x4 + self.conv(x4))
         
         return self.conv(self.conv(x4))
         
@@ -266,7 +249,6 @@ class LMFR_Net(nn.Module):
         out3 = self.active(c3)
         out_feb = self.active(f1)
         out = 0.5 * out1 + 0.2 * out2 + 0.2 * out3 + 0.1 * out_feb
-        # x10 = self.conv_squeeze(x9)
 
         out = self.out_conv(out)
 

@@ -6,5 +6,5 @@ from .PDFUNet import PDFUNet
 from .ResUNetPlusPlus import ResUNetPlusPlus
 from .SA_Unet import SA_UNet
 from .UNetLite import ULite
-from .mymodel import (My76_WNet)
+from .mymodel import DSAE_Net
 from .unettp import UNettp

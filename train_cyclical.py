@@ -14,14 +14,11 @@ from utils.reproducibility import set_seeds
 print("train_cyclical.py")
 # argument parsing
 parser = argparse.ArgumentParser()
-# as seen here: https://stackoverflow.com/a/15460288/3208255
-# parser.add_argument('--layers',  nargs='+', type=int, help='unet configuration (depth/filters)')
-# annoyingly, this does not get on well with guild.ai, so we need to reverse to this one:
 
 # 训练文件的位置
 parser.add_argument('--csv_train', type=str, default='data/DRIVE/train.csv', help='path to training data csv')
 # 模型的名字
-parser.add_argument('--model_name', type=str, default='wnet', help='architecture')
+parser.add_argument('--model_name', type=str, default='DSAE_Net', help='architecture')
 # batch size
 parser.add_argument('--batch_size', type=int, default=4, help='batch Size')
 # 梯度累积的步数
@@ -31,7 +28,7 @@ parser.add_argument('--min_lr', type=float, default=1e-8, help='learning rate')
 # 学习率的最大值
 parser.add_argument('--max_lr', type=float, default=0.01, help='learning rate')
 # 循环的长度
-parser.add_argument('--cycle_lens', type=str, default='20/50', help='cycling config (nr cycles/cycle len')
+parser.add_argument('--cycle_lens', type=str, default='20/10', help='cycling config (nr cycles/cycle len')
 # 评估的指标
 # parser.add_argument('--metric', type=str, default='auc', help='which metric to use for monitoring progress (tr_auc/auc/loss/dice)')
 parser.add_argument('--metric', type=str, default='dice', help='which metric to use for monitoring progress (tr_auc/auc/loss/dice)')
@@ -42,10 +39,8 @@ parser.add_argument('--in_c', type=int, default=3, help='channels in input image
 # 是否保存
 parser.add_argument('--do_not_save', type=str2bool, nargs='?', const=True, default=False, help='avoid saving anything')
 # 保存的路径
-parser.add_argument('--save_path', type=str, default='wnet_drive1', help='path to save model (defaults to date/time')
+parser.add_argument('--save_path', type=str, default='DSAE_Net_drive', help='path to save model (defaults to date/time')
 # these three are for training with pseudo-segmentations
-# e.g. --csv_test data/DRIVE/test.csv --path_test_preds results/DRIVE/experiments/wnet_drive1
-# e.g. --csv_test data/LES_AV/test_all.csv --path_test_preds results/LES_AV/experiments/wnet_drive1
 # 测试文件的位置
 parser.add_argument('--csv_test', type=str, default=None, help='path to test data csv (for using pseudo labels)')
 # parser.add_argument('--csv_test', type=str, default="data/DRIVE/test.csv", help='path to test data csv (for using pseudo labels)')
@@ -92,11 +87,6 @@ def run_one_epoch(loader, model, criterion, optimizer=None, scheduler=None,
     device='cuda' if next(model.parameters()).is_cuda else 'cpu'
     train = optimizer is not None  # if we are in training mode there will be an optimizer and train=True here
 
-    # if train:
-    #     model.train()
-    # else:
-    #     model.eval()
-
     model.train() if train else model.eval()
 
     if assess: logits_all, labels_all = [], []
@@ -109,7 +99,7 @@ def run_one_epoch(loader, model, criterion, optimizer=None, scheduler=None,
 
 
 
-        if isinstance(logits, tuple): # wnet
+        if isinstance(logits, tuple):
             logits_aux_list, logits = logits[:-1], logits[-1]  # 解包多个辅助输出和主输出
             loss_aux = 0
             for logits_aux in logits_aux_list:
@@ -119,24 +109,11 @@ def run_one_epoch(loader, model, criterion, optimizer=None, scheduler=None,
                     loss_aux += criterion(logits_aux, labels)
             loss = loss_aux + criterion(logits, labels.unsqueeze(dim=1).float() if model.n_classes == 1 else labels)
 
-            # logits_aux, logits = logits # 解包多个辅助输出和主输出
-            # if model.n_classes == 1: # BCEWithLogitsLoss()/DiceLoss()
-            #     loss_aux = criterion(logits_aux, labels.unsqueeze(dim=1).float())
-            #     loss = loss_aux + criterion(logits, labels.unsqueeze(dim=1).float())
-            # else: # CrossEntropyLoss()
-            #     loss_aux = criterion(logits_aux, labels)
-            #     loss = loss_aux + criterion(logits, labels)
-        else: # not wnet
+        else:
             if model.n_classes == 1:
                 loss = criterion(logits, labels.unsqueeze(dim=1).float())  # BCEWithLogitsLoss()/DiceLoss()
             else:
                 loss = criterion(logits, labels)  # CrossEntropyLoss()
-
-        # if train:  # only in training mode
-        #     optimizer.zero_grad()
-        #     loss.backward()
-        #     optimizer.step()
-        #     scheduler.step()
 
         if train:  # only in training mode
             (loss / (grad_acc_steps + 1)).backward() # for grad_acc_steps=0, this is just loss
@@ -296,13 +273,6 @@ if __name__ == '__main__':
     print("* Creating Dataloaders, batch size = {}, workers = {}".format(bs, args.num_workers))
     train_loader, val_loader = get_train_val_loaders(csv_path_train=csv_train, csv_path_val=csv_val, batch_size=bs, tg_size=tg_size, label_values=label_values, num_workers=args.num_workers)
 
-    # grad_acc_steps: if I want to train with a fake_bs=K but the actual bs I want is bs=N, then you use
-    # grad_acc_steps = N/K - 1.
-    # Example: bs=4, fake_bs=4 -> grad_acc_steps = 0 (default)
-    # Example: bs=4, fake_bs=2 -> grad_acc_steps = 1
-    # Example: bs=4, fake_bs=1 -> grad_acc_steps = 3
-
-
     print('* Instantiating a {} model'.format(model_name))
     model = get_arch(model_name, in_c=args.in_c, n_classes=n_classes)
     model = model.to(device)
@@ -348,11 +318,6 @@ if __name__ == '__main__':
     print("val_dice: %f" % m2)
     print("best_cycle: %d" % m3)
     if do_not_save is False:
-        # file = open(osp.join(experiment_path, 'val_metrics.txt'), 'w')
-        # file.write(str(m1)+ '\n')
-        # file.write(str(m2)+ '\n')
-        # file.write(str(m3)+ '\n')
-        # file.close()
 
         with open(osp.join(experiment_path, 'val_metrics.txt'), 'w') as f:
             print('Best AUC = {:.2f}\nBest DICE = {:.2f}\nBest cycle = {}'.format(100*m1, 100*m2, m3), file=f)

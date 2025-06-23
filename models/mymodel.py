@@ -45,9 +45,9 @@ class UNet(nn.Module):
             x = up(x, down_activations[i])
         return self.final(x)
 
-class UNet_76(nn.Module):
+class CAE_UNet(nn.Module):
     def __init__(self, in_c, n_classes, layers, k_sz=3, up_mode='transp_conv', conv_bridge=True, shortcut=True):
-        super(UNet_76, self).__init__()
+        super(CAE_UNet, self).__init__()
         self.n_classes = n_classes
         self.first = ConvBlock_6(in_c=in_c, out_c=layers[0], k_sz=k_sz,
                                shortcut=shortcut, pool=False)
@@ -86,11 +86,11 @@ class UNet_76(nn.Module):
             x = up(x, down_activations[i])
         return self.final(x)
 
-class My76_WNet(torch.nn.Module):
+class DSAE_Net(torch.nn.Module):
     def __init__(self, n_classes=1, in_c=3, layers=(8,16,32), conv_bridge=True, shortcut=True, mode='train'):
-        super(My76_WNet, self).__init__()
-        self.unet1 = UNet_76(in_c=in_c, n_classes=n_classes, layers=layers, conv_bridge=conv_bridge, shortcut=shortcut)
-        self.unet2 = UNet_76(in_c=in_c+n_classes, n_classes=n_classes, layers=layers, conv_bridge=conv_bridge, shortcut=shortcut)
+        super(DSAE_Net, self).__init__()
+        self.unet1 = CAE_UNet(in_c=in_c, n_classes=n_classes, layers=layers, conv_bridge=conv_bridge, shortcut=shortcut)
+        self.unet2 = CAE_UNet(in_c=in_c+n_classes, n_classes=n_classes, layers=layers, conv_bridge=conv_bridge, shortcut=shortcut)
         self.n_classes = n_classes
         self.mode=mode
 
@@ -103,7 +103,7 @@ class My76_WNet(torch.nn.Module):
 
 if __name__ == '__main__':
     input = torch.randn((1, 2, 512, 512)).to('cuda')
-    model = My76_WNet(in_c=2, n_classes=3, layers=[8,16,32], conv_bridge=True, shortcut=True).to('cuda')
+    model = DSAE_Net(in_c=2, n_classes=3, layers=[8,16,32], conv_bridge=True, shortcut=True).to('cuda')
     model.mode = 'eval'
     print(model)
     flops, params = profile(model, inputs=(input,))

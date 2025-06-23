@@ -1,8 +1,3 @@
-# 论文名称：Coordinate Attention for Efficient Mobile Network Design
-# 论文地址：https://arxiv.org/abs/2103.02907
-# 代码地址：https://github.com/houqb/CoordAttention
-# 博客地址：https://yolov5.blog.csdn.net/article/details/130624384
-
 import torch
 import torch.nn as nn
 
@@ -176,18 +171,11 @@ class C2f_CA(nn.Module):
         return self.cv2(torch.cat(y, 1))
 
 if __name__ == '__main__':
-    # CoordAtt:注意力
-    # C3_CA ：卷积块
-    # block = CoordAtt(32, 32, 32)
-    # block = C3_CA(32, 32, n=1)
     block = C2f_CA(32, 32, n=1)
     input = torch.rand(1, 32, 512, 512).to("cuda")
     block = block.to("cuda")
     output = block(input)
     parms = sum(p.numel() for p in block.parameters())
     print('parameters:{}'.format(parms))
-    # CoordAtt parameters: 856
-    # C3_CA parameters: 5240
-    # C2f_CA parameters: 7800
     print(input.size())
     print(output.size())

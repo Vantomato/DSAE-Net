@@ -1,7 +1,7 @@
 import sys
 import time
 from thop import profile
-from models import (AttU_Net, ConvUNeXt, FR_UNet, LMFR_Net,PDFUNet, ResUNetPlusPlus, SA_UNet, ULite, My76_WNet, UNettp)
+from models import (AttU_Net, ConvUNeXt, FR_UNet, LMFR_Net,PDFUNet, ResUNetPlusPlus, SA_UNet, ULite, DSAE_Net, UNettp)
 import torch
 
 def get_arch(model_name, in_c=3, n_classes=1):
@@ -21,8 +21,8 @@ def get_arch(model_name, in_c=3, n_classes=1):
         model = SA_UNet(in_channels=in_c, num_classes=n_classes)
     elif model_name == 'ULite':
         model = ULite(in_channels=in_c, num_classes=n_classes)
-    elif model_name == 'My76_WNet':
-        model = My76_WNet(in_c=in_c, n_classes=n_classes, layers=[8,16,32], conv_bridge=True, shortcut=True)
+    elif model_name == 'DSAE_Net':
+        model = DSAE_Net(in_c=in_c, n_classes=n_classes, layers=[8,16,32], conv_bridge=True, shortcut=True)
     elif model_name == 'UNettp':
         model = UNettp(in_channels=in_c, num_classes=n_classes)
     else: sys.exit('not a valid model_name, check models.get_model.py')
@@ -50,7 +50,7 @@ def calculate_all(model_name_arr):
         calculate_flops_params_infer(model)
 
 if __name__ == '__main__':
-    model_name = 'My76_WNet'
+    model_name = 'DSAE_Net'
     input = torch.randn((1, 3, 512, 512)).to('cuda')
     model = get_arch(model_name, in_c=3, n_classes=1).to('cuda')
     model.mode='eval'
